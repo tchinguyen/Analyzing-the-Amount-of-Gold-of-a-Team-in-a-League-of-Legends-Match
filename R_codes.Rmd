@@ -1,0 +1,263 @@
+---
+title: "Group final"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(leaps) # For best subset selection.
+library(ISLR) # To access the data set Hitters
+library(ggplot2)
+library(corrplot)
+library(carData)
+library(car)
+```
+
+```{r}
+lol_games <- read.csv("lol_games.csv", header = TRUE)
+
+```
+
+## Step 1: Make new data frame without gameID, gameDuriation, and variables containing all zero
+
+```{r}
+is.zero <- function(x){
+  all(x == 0)
+}
+is.zero <- function(x){
+  all(x == 0)
+}
+zero_ind <- apply(lol_games, 2, is.zero)
+new_lol_games <- lol_games[,!zero_ind]
+new_lol_games <- new_lol_games[, -c(1,2)]
+```
+
+## Step 2: There are two catergotical variables (isFirstTower, isFirstBlood), so we need to convert those variables to factor
+- Explanation from demo_8: Before we start, we have to indicate R that the variable origin is a categorical predictor. _*Note that the values of this variable are numeric. However, they imply categories rather than numbers. Therefore, we have to model them in the correct way._*.
+
+```{r}
+# new_lol_games$isFirstTower <- factor(new_lol_games$isFirstTower)
+# levels(new_lol_games$isFirstTower) <- c("Yes", "No")
+# new_lol_games$isFirstTower <- relevel(new_lol_games$isFirstTower, ref = "No")
+# contrasts(new_lol_games$isFirstTower)
+# 
+# new_lol_games$isFirstBlood <- factor(new_lol_games$isFirstBlood)
+# levels(new_lol_games$isFirstBlood) <- c("Yes", "No")
+# new_lol_games$isFirstBlood <- relevel(new_lol_games$isFirstBlood, ref = "No")
+# contrasts(new_lol_games$isFirstBlood)
+
+```
+- In both cases, *"No" is the reference category*.
+
+# Exploratory Analysis on Categorical Variables
+```{r}
+# plot(goldDiff~isFirstTower, data=new_lol_games)
+# plot(goldDiff~isFirstBlood, data=new_lol_games)
+```
+
+total drake I got (Killed - lost)
+
+i killed 5 drake and $200 each, got $1000
+enemy killed 3 drake, got $600
+drade difference is 5-3=2
+gold difference $400
+```{r}
+# new_lol_games$FireDrake <- new_lol_games$killedFireDrake - new_lol_games$lostFireDrake
+# new_lol_games$WaterDrake <- new_lol_games$killedWaterDrake - new_lol_games$lostWaterDrake
+# new_lol_games$AirDrake <- new_lol_games$killedAirDrake - new_lol_games$lostAirDrake
+# new_lol_games$EarthDrake <- new_lol_games$killedEarthDrake - new_lol_games$lostEarthDrake
+# new_lol_games$ElderDrake <- new_lol_games$killedElderDrake - new_lol_games$lostElderDrake
+# new_lol_games$BaronNashor <- new_lol_games$killedBaronNashor - new_lol_games$lostBaronNashor
+# new_lol_games$RiftHerald <- new_lol_games$killedRiftHerald - new_lol_games$lostRiftHerald
+# new_lol_games$TopInhibitor <- new_lol_games$destroyedTopInhibitor - new_lol_games$lostTopInhibitor
+# new_lol_games$MidInhibitor <- new_lol_games$destroyedMidInhibitor - new_lol_games$lostMidInhibitor
+# new_lol_games$BotInhibitor <- new_lol_games$destroyedBotInhibitor - new_lol_games$lostBotInhibitor
+# new_lol_games$TopNexusTurret <- new_lol_games$destroyedTopNexusTurret - new_lol_games$lostTopNexusTurret
+# 
+# 
+# new_lol_games$BotBaseTurret <- new_lol_games$destroyedBotBaseTurret - new_lol_games$lostBotBaseTurret
+# 
+# 
+# new_lol_games$TopInnerTurret <- new_lol_games$destroyedTopInnerTurret - new_lol_games$lostTopInnerTurret
+# new_lol_games$MidInnerTurret <- new_lol_games$destroyedMidInnerTurret - new_lol_games$lostMidInnerTurret
+# new_lol_games$BotInnerTurret <- new_lol_games$destroyedBotInnerTurret - new_lol_games$lostBotInnerTurret
+# 
+# new_lol_games$TopOuterTurret <- new_lol_games$destroyedTopOuterTurret - new_lol_games$lostTopOuterTurret
+# new_lol_games$MidOuterTurret <- new_lol_games$destroyedMidOuterTurret - new_lol_games$lostMidOuterTurret
+# new_lol_games$BotOuterTurret <- new_lol_games$destroyedBotOuterTurret - new_lol_games$lostBotOuterTurret
+# 
+# new_lol_games$Wards <- new_lol_games$wardsDestroyed - new_lol_games$wardsLost
+```
+
+```{r}
+# my.model <- lm(goldDiff ~ FireDrake + WaterDrake + AirDrake + EarthDrake + ElderDrake + 
+#                  BaronNashor + RiftHerald + TopInhibitor +  MidInhibitor + BotInhibitor + 
+#                  TopInnerTurret + MidInnerTurret + 
+#                  TopOuterTurret + MidOuterTurret + BotOuterTurret + Wards + 
+#                  kills + deaths + isFirstTower + isFirstBlood
+#                  ,data = new_lol_games)
+# 
+# summary(my.model)
+# vif(my.model)
+# 
+# X <- model.matrix(~expDiff + champLevelDiff + FireDrake + WaterDrake + AirDrake + EarthDrake + ElderDrake + 
+#                  BaronNashor + RiftHerald + TopInhibitor +  MidInhibitor + BotInhibitor + 
+#                  TopNexusTurret + BotBaseTurret + 
+#                  TopInnerTurret + MidInnerTurret + BotInnerTurret + 
+#                  TopOuterTurret + MidOuterTurret + BotOuterTurret + Wards + 
+#                  kills + deaths + assists + isFirstTower + isFirstBlood - 1, data = new_lol_games)
+
+```
+
+when the blue team kills one more drake than the red team, the gold difference will increase 157 and the blue team will get 157 gold more than the red team
+```{r}
+# constrast.vectors.correlations <- cor(X)
+# 
+# #Make the correlation plot 
+# corrplot(constrast.vectors.correlations, type = "full", addgrid.col = "gray", tl.col = "black", tl.srt = 90, method = "number",tl.cex = 0.4, number.cex=0.3, addCoef.col ="black")
+```
+## step 3: Run initial model with all variables 
+
+```{r}
+initial_mlr_model <- lm(goldDiff~., data = new_lol_games)
+summary(initial_mlr_model) # There are some insignificant predictors due to t.test
+vif(initial_mlr_model) # based on the VIF, there are some severe correlation which VIF > 5
+# Removing high leverage points
+cooksd <- cooks.distance(initial_mlr_model)
+influential <- as.numeric(names(cooksd)[(cooksd > (4/24912))])
+nrow(new_lol_games)
+new_lol_games <- new_lol_games[-influential, ]
+nrow(new_lol_games)
+```
+
+## Step 4: Create a correlation plot with the new data set to solve multicollinearity by removing correlated variables
+
+```{r}
+# pdf("correlation-plot.pdf")
+X <- model.matrix(~expDiff+ champLevelDiff+ isFirstTower+ isFirstBlood+ killedFireDrake+ killedWaterDrake+ killedAirDrake+ killedEarthDrake+ killedElderDrake+ lostFireDrake+ lostWaterDrake+ lostAirDrake+ lostEarthDrake+ lostElderDrake+ killedBaronNashor+  lostBaronNashor+ killedRiftHerald+ lostRiftHerald+ destroyedTopInhibitor+ destroyedMidInhibitor+ destroyedBotInhibitor+ lostTopInhibitor+ lostMidInhibitor+ lostBotInhibitor+ destroyedTopNexusTurret+ destroyedBotNexusTurret+ lostTopNexusTurret+ lostBotNexusTurret+ destroyedBotBaseTurret+ lostBotBaseTurret+ destroyedTopInnerTurret+ destroyedMidInnerTurret+ destroyedBotInnerTurret+ lostTopInnerTurret+ lostMidInnerTurret+ lostBotInnerTurret + destroyedTopOuterTurret+ destroyedMidOuterTurret+ destroyedBotOuterTurret+ lostTopOuterTurret+  lostMidOuterTurret+ lostBotOuterTurret+ kills+ deaths + assists+ wardsPlaced+ wardsDestroyed+ wardsLost - 1, data = new_lol_games)
+
+constrast.vectors.correlations <- cor(X)
+
+#Make the correlation plot 
+corrplot(constrast.vectors.correlations, type = "full", addgrid.col = "gray", tl.col = "black", tl.srt = 90,tl.cex = 0.4, number.cex=0.3)
+# dev.off()
+
+```
+## Step 5: Create a new data set without correlated variables
+
+```{r}
+cor_variable_names <- c("assists", "champLevelDiff" , "lostRiftHerald", "destroyedTopNexusTurret", "destroyedBotNexusTurret", "lostBotNexusTurret",  "lostTopNexusTurret", "expDiff")
+ind <- names(new_lol_games) %in% cor_variable_names
+new_lol_games_2 <- new_lol_games[, !ind]
+```
+
+## Step 6: Recheck VIF value of the new model. See that no VIF > 5, so no more severse correlation 
+
+```{r}
+### These commands below are to create a correlation map with new data set (just to in case)
+# pdf("correlation-plot-2.pdf")
+# X <- model.matrix(~ isFirstTower+ isFirstBlood+ killedFireDrake+ killedWaterDrake+ killedAirDrake+ killedEarthDrake+ killedElderDrake+ lostFireDrake+ lostWaterDrake+ lostAirDrake+ lostEarthDrake+ lostElderDrake+ killedBaronNashor+  lostBaronNashor+ killedRiftHerald+  destroyedTopInhibitor+ destroyedMidInhibitor+ destroyedBotInhibitor+ lostTopInhibitor+ lostMidInhibitor+ lostBotInhibitor+ destroyedBotBaseTurret+ lostBotBaseTurret+ destroyedTopInnerTurret+ destroyedMidInnerTurret+ destroyedBotInnerTurret+ lostTopInnerTurret+ lostMidInnerTurret+ lostBotInnerTurret + destroyedTopOuterTurret+ destroyedMidOuterTurret+ destroyedBotOuterTurret+ lostTopOuterTurret+  lostMidOuterTurret+ lostBotOuterTurret+ deaths + wardsPlaced+ kills + wardsDestroyed+ wardsLost - 1, data = new_lol_games_2)
+# 
+# constrast.vectors.correlations <- cor(X)
+# 
+# #Make the correlation plot 
+# corrplot(constrast.vectors.correlations, type = "full", addgrid.col = "gray", tl.col = "black", tl.srt = 90, method = "number",tl.cex = 0.4, number.cex=0.3, addCoef.col ="black")
+# dev.off()
+
+second_mlr_model <- lm(goldDiff~., data = new_lol_games_2)
+summary(second_mlr_model)
+vif(second_mlr_model)
+```
+### Step 7: Residuals analysis
+
+```{r}
+par(mfrow = c(2,2))
+plot(second_mlr_model) # The plots show that all the assumptions seem to be satisfied except the high leverage point.
+                      # Namely, the residuals vs leverage plot show that the are some outliers outside of (-4, 4)
+                      
+```
+
+## Step 8: Run regsubsets using forward method
+
+```{r}
+forward_sel <- regsubsets(goldDiff~., data = new_lol_games_2, nvmax = 47,
+                          intercept = TRUE, method = "forward",
+                          really.big = FALSE)
+sumF <- summary(forward_sel)
+print(sumF)
+```
+## Step 9: Select the overall best submodel (select the model with the smallest BIC value) 
+
+```{r}
+# modelwith.minimum.BIC tells us the location of the smallest element in the vector "sumBS$bic"
+modelwith.minimum.BIC <- which.min(sumF$bic)
+# We select the best model from the list.
+best.model <- sumF$which[modelwith.minimum.BIC,]
+print(best.model)
+```
+
+## Step 10: plot the performance of the models in terms of the residual sum of squares, adjusted $R^2$ statistic and BIC.
+
+```{r}
+par(mfrow=c(1,3))
+# Plot RSS
+plot(sumF$rss, xlab = "Number of Variables", ylab = "RSS", type = "l")
+# Plot Adjusted R^2, highlight max value
+plot(sumF$adjr2, xlab = "Number of Variables", ylab = "Adjusted RSq", type = "l")
+max = which.max(sumF$adjr2)
+points(max, sumF$adjr2[max], col = "red", cex = 2, pch = 20)
+# Plot BIC, highlight min value
+plot(sumF$bic, xlab = "Number of Variables", ylab = "BIC", type = "l")
+min = which.min(sumF$bic)
+points(min, sumF$bic[min], col = "red", cex = 2, pch = 20)
+```
+- Plots interpretation: The adjusted $R^2$ suggests the model with around 35 variables. The BIC plot suggests the model with around 30 variables.
+
+### Step 11: Fit the selected model
+
+To fit the reduce model, we first create a reduced data set that only includes the predictors in the best submodel.
+
+```{r}
+# Create matrix with all predictors. -1 means returns all but variables(in this data set response locate at the 1st index)
+X <- new_lol_games_2[,-1] 
+# Create matrix with the predictors in the best model.
+Xs <- X[,best.model[-1]] # We use "best.model[-1]" to remove the intercept.
+# Create a reduced data set with matrix of predictors and the response vector.
+subset.data <- data.frame(Xs, "goldDiff" = new_lol_games_2$goldDiff)
+lm.best <- lm(goldDiff~., data = subset.data)
+summary(lm.best)  # based on the t.test with the alpha = 0.05, all predictors are significant
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(lm.best)
+```
+- Based on the whole analysis, the second model (40 predictors) and the best model (30 predictors) appear to have the same quality in term of residual analysis, adjusted R-squared. The residual assumptions of both models are not violated. However, based on t.test, the best model technically contains all the significant predictors while the second model does not. Also, for the sake of simplification and interpretation, we should stick with the model with fewer variables. Besides, since the residuals assumptions of this model are already satisfied, we might not need to perform the transformation.
+
+
+```{r}
+#coef(lm.best)
+sort(coef(lm.best), decreasing = TRUE)
+```
+
+- The estimated model is
+
+$$
+y_i = 1321.46 -2031.96d_i -2727.09d_i + 1442.88x_2 -261.29x_3 -193.67x_4 -146.43x_5 -160.45x_6 -1467.95x_7 +1340.31x_8 -1456.99x_{10}
+$$
+$$
++245.45x_{9} +190.66x_{10} +738.50x_{11} -719.51x_{12} +814.76x_{13} +867.08x_{14} + 795.52x_{15} -843.39x_{16} -794.71x_{117}  -804.34x_{18} +389.93x_{19}
+$$
+$$
++287.88x_{20} +471.82x_{21} -854.58x_{22} -747.92x_{23} -799.89x_{24} +410.25x_{25} -413.16x_{26} +11.83x_{27} -19.16x_{28}
+$$
+
+
+## Final step: Interpret the coefficients
+from $\hat{\beta_0} ... \hat{\beta_{28}}$
+
+
+
